@@ -1,7 +1,11 @@
+PyYAML
 langchain
 langchain-openai
-langchain_community
+langchain-community
+langchain-core
+faiss-cpu
 pymupdf
 streamlit
-PyYAML
+python-magic
+llama-index
 
