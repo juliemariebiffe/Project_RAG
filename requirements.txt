@@ -1,9 +1,8 @@
 streamlit
 PyYAML
-langchain==0.1.14
-langchain-core==0.1.40
+langchain-core>=0.2.2,<0.3
 langchain-openai==0.1.8
-langchain-community==0.0.30
-llama-index==0.10.28
-pymupdf
-faiss-cpu
+langchain-community==0.0.17
+langchain==0.1.14
+PyMuPDF==1.22.5
+PyYAML>=6.0
