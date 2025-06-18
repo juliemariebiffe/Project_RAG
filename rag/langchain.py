@@ -9,6 +9,8 @@
 
 
 #pip install langchain langchain-openai langchain_community pymupdf yaml
+#pip install langchain==0.3.25 langchain-openai==0.1.7 langchain-community==0.0.36 pymupdf pyyaml
+
 
 
 # ### Imports
@@ -21,10 +23,10 @@ import yaml
 
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain.embeddings import OpenAIEmbeddings
-from langchain.chat_models import AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI
 
 #from langchain.chains import RetrievalQA
 #from langchain.llms import OpenAI
