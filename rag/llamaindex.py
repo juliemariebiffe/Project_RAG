@@ -1,20 +1,22 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[26]:
+
+
+#pip install llama-index
+#pip install llama-index-readers-file
+#pip install llama-index-embeddings-azure-openai
+#pip install llama-index-llms-azure-openai
+
+
+# In[27]:
+
+
 import yaml
 
-from datetime import datetime
 
-from llama_index.core import VectorStoreIndex
-from llama_index.core import Settings
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.schema import TextNode
-from llama_index.core.vector_stores import SimpleVectorStore
-from llama_index.core.vector_stores import VectorStoreQuery
-from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
-from llama_index.llms.azure_openai import AzureOpenAI
-from llama_index.readers.file import PyMuPDFReader
-
-
-CHUNK_SIZE = 1_000
-CHUNK_OVERLAP = 200
+# In[28]:
 
 
 def read_config(file_path):
@@ -26,8 +28,15 @@ def read_config(file_path):
             print(f"Error reading YAML file: {e}")
             return None
 
-config = read_config("secrets/config.yaml")
+config = read_config("C:/Users/Julie-Marie Biffe/Project_RAG/secrets/config.yaml")
 
+
+# In[29]:
+
+
+from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
 llm = AzureOpenAI(
     model=config["chat"]["azure_deployment"],
@@ -38,7 +47,7 @@ llm = AzureOpenAI(
 )
 
 # You need to deploy your own embedding model as well as your own chat completion model
-embedder = AzureOpenAIEmbedding(
+embed_model = AzureOpenAIEmbedding(
     model=config["embedding"]["azure_deployment"],              # for the moment, same as deployment
     deployment_name=config["embedding"]["azure_deployment"],
     api_key=config["embedding"]["azure_api_key"],
@@ -46,8 +55,178 @@ embedder = AzureOpenAIEmbedding(
     api_version=config["embedding"]["azure_api_version"],
 )
 
+
+# In[30]:
+
+
+from llama_index.readers.file import PyMuPDFReader
+
+
+# In[31]:
+
+
+loader = PyMuPDFReader()
+documents = loader.load(file_path="C:/Users/Julie-Marie Biffe/OneDrive/Documents/mag 3/Mignot/Anomaly_Detection_The_Mathematization_of.pdf")
+
+# documents = SimpleDirectoryReader(
+#     input_files=["../../data/paul_graham/paul_graham_essay.txt"]
+# ).load_data()
+
+
+# In[32]:
+
+
+from llama_index.core import Settings
+
 Settings.llm = llm
-Settings.embed_model = embedder
+Settings.embed_model = embed_model
+
+index = VectorStoreIndex.from_documents(documents)
+
+
+# In[33]:
+
+
+query = "liste les ouvrages mentionnés dans le document"
+query_engine = index.as_query_engine()
+answer = query_engine.query(query)
+
+print(answer.get_formatted_sources())
+print("query was:", query)
+print("answer was:", answer)
+
+
+# In[34]:
+
+
+from llama_index.core.node_parser import SentenceSplitter
+
+text_parser = SentenceSplitter(
+    chunk_size=1024,
+    # separator=" ",
+)
+
+text_chunks = []
+# maintain relationship with source doc index, to help inject doc metadata in (3)
+doc_idxs = []
+for doc_idx, doc in enumerate(documents):
+    cur_text_chunks = text_parser.split_text(doc.text)
+    text_chunks.extend(cur_text_chunks)
+    doc_idxs.extend([doc_idx] * len(cur_text_chunks))
+
+
+# In[35]:
+
+
+text_chunks
+
+
+# In[36]:
+
+
+from llama_index.core.schema import TextNode
+
+nodes = []
+for idx, text_chunk in enumerate(text_chunks):
+    node = TextNode(
+        text=text_chunk,
+    )
+    src_doc = documents[doc_idxs[idx]]
+    node.metadata = src_doc.metadata
+    nodes.append(node)
+
+
+# In[37]:
+
+
+print(text_chunk)
+
+
+# In[38]:
+
+
+for node in nodes:
+    node_embedding = embed_model.get_text_embedding(
+        node.get_content(metadata_mode="all")
+    )
+    node.embedding = node_embedding
+
+
+# In[39]:
+
+
+# from llama_index.vector_stores.postgres import PGVectorStore
+
+# vector_store = PGVectorStore.from_params(
+#     database=db_name,
+#     host=host,
+#     password=password,
+#     port=port,
+#     user=user,
+#     table_name="llama2_paper",
+#     embed_dim=384,  # openai embedding dimension
+# )
+
+from llama_index.core.vector_stores import SimpleVectorStore
+
+vector_store = SimpleVectorStore()
+vector_store.add(nodes)
+
+
+# In[40]:
+
+
+len(nodes)
+
+
+# In[41]:
+
+
+query_str = "list all books mentioned in the document"
+query_embedding = embed_model.get_query_embedding(query_str)
+from llama_index.core.vector_stores import VectorStoreQuery
+
+query_mode = "default"
+# query_mode = "sparse"
+# query_mode = "hybrid"
+
+vector_store_query = VectorStoreQuery(
+    query_embedding=query_embedding, similarity_top_k=5, mode=query_mode
+)
+
+# returns a VectorStoreQueryResult
+query_result = vector_store.query(vector_store_query)
+if query_result.nodes:
+    print(query_result.nodes[0].get_content())
+else:
+    print('No results')
+
+
+# In[42]:
+
+
+query_result
+
+
+# In[43]:
+
+
+vector_store.to_dict()
+
+
+# In[44]:
+
+
+CHUNK_SIZE = 1_000
+CHUNK_OVERLAP = 200
+
+embedder = AzureOpenAIEmbedding(
+    model=config["embedding"]["azure_deployment"],              # for the moment, same as deployment
+    deployment_name=config["embedding"]["azure_deployment"],
+    api_key=config["embedding"]["azure_api_key"],
+    azure_endpoint=config["embedding"]["azure_endpoint"],
+    api_version=config["embedding"]["azure_api_version"],
+)
 
 vector_store = SimpleVectorStore()
 
@@ -69,17 +248,18 @@ def store_pdf_file(file_path: str, doc_name: str):
         cur_text_chunks = text_parser.split_text(doc.text)
         text_chunks.extend(cur_text_chunks)
         doc_idxs.extend([doc_idx] * len(cur_text_chunks))
-     
+
     nodes = []
     for idx, text_chunk in enumerate(text_chunks):
         node = TextNode(
             text=text_chunk,
         )
+        print(node.id_)
         src_doc = documents[doc_idxs[idx]]
         node.metadata = src_doc.metadata
         nodes.append(node)
 
-    for node in nodes:  
+    for node in nodes:
         node_embedding = embedder.get_text_embedding(
             node.get_content(metadata_mode="all")
         )
@@ -89,53 +269,13 @@ def store_pdf_file(file_path: str, doc_name: str):
     return
 
 
-def delete_file_from_store(name: str) -> int:
-    raise NotImplemented('function not implemented for Llamaindex')
-    ids_to_remove = []
-    for (id, doc) in vector_store.store.items():
-        if name == doc['metadata']['document_name']:
-            ids_to_remove.append(id)
-    vector_store.delete(ids_to_remove)
-    #print('File deleted:', name)
-    return len(ids_to_remove)
+# In[45]:
 
 
-def inspect_vector_store(top_n: int=10) -> list:
-    raise NotImplemented('function not implemented for Llamaindex')
-    docs = []
-    for index, (id, doc) in enumerate(vector_store.store.items()):
-        if index < top_n:
-            docs.append({
-                'id': id,
-                'document_name': doc['metadata']['document_name'],
-                'insert_date': doc['metadata']['insert_date'],
-                'text': doc['text']
-                })
-            # docs have keys 'id', 'vector', 'text', 'metadata'
-            # print(f"{id} {doc['metadata']['document_name']}: {doc['text']}")
-        else:
-            break
-    return docs
+store_pdf_file('C:/Users/Julie-Marie Biffe/OneDrive/Documents/mag 3/Mignot/B4LFlaparureguydemaupassant.pdf', 'B4LFlaparureguydemaupassant.pdf')
 
 
-def get_vector_store_info():
-    raise NotImplemented('function not implemented for Llamaindex')
-    nb_docs = 0
-    max_date, min_date = None, None
-    documents = set()
-    for (id, doc) in vector_store.store.items():
-        nb_docs += 1
-        if max_date is None or max_date < doc['metadata']['insert_date']:
-            max_date = doc['metadata']['insert_date']
-        if min_date is None or min_date > doc['metadata']['insert_date']:
-            min_date = doc['metadata']['insert_date']
-        documents.add(doc['metadata']['document_name'])
-    return {
-        'nb_chunks': nb_docs,
-        'min_insert_date': min_date,
-        'max_insert_date': max_date,
-        'nb_documents': len(documents)
-    }
+# In[46]:
 
 
 def retrieve(question: str):
@@ -207,3 +347,40 @@ def answer_question(question: str) -> str:
     messages = build_qa_messages(question, docs_content)
     response = llm.invoke(messages)
     return response.content
+
+
+# In[47]:
+
+
+retrieve("comment s'appelle l'amie de madame Loisel") is None
+
+
+# In[48]:
+
+
+vector_store.query(VectorStoreQuery(
+        query_embedding=embedder.get_query_embedding("comment s'appelle l'amie de madame Loisel"),
+        similarity_top_k=5,
+        mode=query_mode
+    ))
+
+
+# 
+
+# In[50]:
+
+
+vector_store.get('f758d76b-7f38-4810-842b-b29b282c35af')
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
