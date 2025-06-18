@@ -1,11 +1,8 @@
 langchain==0.1.16
+langchain-core>=0.1.48
 langchain-community==0.0.36
 langchain-text-splitters
 langchain-openai
 pymupdf>=1.25.3
 pyyaml>=6.0
 streamlit>=1.42.0
-# Remove or comment out the strict version pin for langchain-core
-# langchain-core==0.1.43
-
-
