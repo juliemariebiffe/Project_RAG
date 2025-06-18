@@ -1,5 +1,5 @@
 langchain==0.3.25
-langchain-openai==0.1.7
+langchain-openai==0.1.11
 langchain-community==0.0.36
 pymupdf
 pyyaml
