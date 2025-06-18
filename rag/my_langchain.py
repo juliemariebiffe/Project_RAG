@@ -23,10 +23,12 @@ import yaml
 
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain.text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain.embeddings import OpenAIEmbeddings
 from langchain_openai import AzureChatOpenAI
+
+
 
 #from langchain.chains import RetrievalQA
 #from langchain.llms import OpenAI
