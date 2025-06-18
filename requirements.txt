@@ -4,4 +4,3 @@ langchain_community
 pymupdf
 streamlit
 PyYAML
-yaml
