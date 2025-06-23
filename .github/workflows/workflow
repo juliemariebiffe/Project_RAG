@@ -1,7 +1,0 @@
-- name: Check current directory and files
-  run: |
-    pwd
-    echo "Liste des fichiers à la racine :"
-    ls -la
-    echo "Arborescence complète :"
-    find . -type f
