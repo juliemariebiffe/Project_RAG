@@ -1,6 +1,3 @@
 [browser]
 
 gatherUsageStats = false
-
-[app]
-target = "rag/my_langchain.py"
