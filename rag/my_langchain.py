@@ -1,47 +1,34 @@
-import yaml
+import streamlit as st
 
 from datetime import datetime
-
-from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
-
-from langchain_openai import AzureOpenAIEmbeddings
-from langchain_openai import AzureChatOpenAI
-
+from langchain_openai import AzureOpenAIEmbeddings, AzureChatOpenAI
 
 CHUNK_SIZE = 1_000
 CHUNK_OVERLAP = 200
 
 
-def read_config(file_path):
-    with open(file_path, 'r') as file:
-        try:
-            config = yaml.safe_load(file)
-            return config
-        except yaml.YAMLError as e:
-            print(f"Error reading YAML file: {e}")
-            return None
 
-config = read_config("secrets/config.yaml")
-
+# Accès aux secrets
+config = st.secrets
 
 embedder = AzureOpenAIEmbeddings(
-    azure_endpoint=config["embedding"]["azure_endpoint"],
-    azure_deployment=config["embedding"]["azure_deployment"],
-    openai_api_version=config["embedding"]["azure_api_version"],
-    api_key=config["embedding"]["azure_api_key"]
+    azure_endpoint=config.embedding.azure_endpoint,
+    azure_deployment=config.embedding.azure_deployment,
+    openai_api_version=config.embedding.azure_api_version,
+    api_key=config.embedding.azure_api_key
 )
 
 vector_store = InMemoryVectorStore(embedder)
 
 llm = AzureChatOpenAI(
-    azure_endpoint=config["chat"]["azure_endpoint"],
-    azure_deployment=config["chat"]["azure_deployment"],
-    openai_api_version=config["chat"]["azure_api_version"],
-    api_key=config["chat"]["azure_api_key"],
+    azure_endpoint=config.chat.azure_endpoint,
+    azure_deployment=config.chat.azure_deployment,
+    openai_api_version=config.chat.azure_api_version,
+    api_key=config.chat.azure_api_key,
 )
 
 
