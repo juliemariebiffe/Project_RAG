@@ -1,5 +1,11 @@
 [server]
 headless = true
 
-[global]
-mainScript = "rag/my_langchain.py"
+[theme]
+primaryColor = "#1E90FF"
+
+[general]
+email = "biffejuliemarie@gmail.com"
+
+[app]
+target = "rag/my_langchain.py"
