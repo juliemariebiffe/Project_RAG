@@ -1,12 +1,12 @@
-name: Deploy Streamlit App
+name: Build and Test
 
 on:
   push:
     branches:
-      - main  
+      - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,14 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Check current directory and files
+      # Optionnel : tu peux lancer tes tests ici, par exemple pytest
+      - name: Run tests
         run: |
-          pwd
-          ls -la
-          ls -R
-
-      - name: Run Streamlit app
-        run: |
-          streamlit run rag/my_langchain.py --server.port 8501 --server.headless true
-
-          
+          pytest tests/  # ou le dossier où sont tes tests, ou simplement `echo "No tests"`
