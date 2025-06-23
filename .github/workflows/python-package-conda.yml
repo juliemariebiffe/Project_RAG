@@ -31,4 +31,6 @@ jobs:
 
       - name: Run Streamlit app
         run: |
-          streamlit run Project_RAG/rag/my_langchain.py --server.port 8501 --server.headless true
+          streamlit run rag/my_langchain.py --server.port 8501 --server.headless true
+
+          
