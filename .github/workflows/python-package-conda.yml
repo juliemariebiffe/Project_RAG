@@ -24,5 +24,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Streamlit app
-        run: streamlit run my_langchain.py --server.port 8501 --server.headless true
+        run: streamlit run Project_RAG/rag/my_langchain.py --server.port 8501 --server.headless true
+        
         
