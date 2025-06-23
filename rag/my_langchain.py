@@ -11,7 +11,6 @@ CHUNK_SIZE = 1_000
 CHUNK_OVERLAP = 200
 
 
-
 # Accès aux secrets
 config = st.secrets
 
